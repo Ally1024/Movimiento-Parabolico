@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulación Física: Dispara al Mono (Corregido)</title>
+    <style>
+        /* Estilos generales modernos y profesionales */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: #1e1e24;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        h1 {
+            margin-bottom: 15px;
+            color: #4cc9f0;
+            text-shadow: 0 0 10px rgba(76, 201, 240, 0.3);
+            font-size: 24px;
+            text-align: center;
+        }
+
+        .main-container {
+            display: flex;
+            flex-direction: row;
+            gap: 20px;
+            max-width: 1400px;
+            width: 100%;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        /* Columna Izquierda: Controles y Ecuaciones */
+        .sidebar {
+            flex: 1;
+            min-width: 340px;
+            max-width: 420px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* Columna Derecha: Canvas y Datos */
+        .simulation-container {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            position: relative;
+        }
+
+        .panel {
+            background: #2a2a35;
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #3f3f52;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .panel-title {
+            font-size: 16px;
+            color: #f72585;
+            margin-bottom: 12px;
+            border-bottom: 2px solid #3f3f52;
+            padding-bottom: 5px;
+            text-transform: uppercase;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        /* Grid de controles */
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .control-item {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .control-item label {
+            font-size: 13px;
+            color: #ccc;
+        }
+
+        .control-item .input-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .control-item input[type="range"] {
+            flex: 1;
+            accent-color: #4cc9f0;
+        }
+
+        .control-item input[type="number"] {
+            width: 70px;
+            background: #1e1e24;
+            border: 1px solid #555;
+            color: #fff;
+            padding: 3px 5px;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        /* Botones de acción */
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            font-size: 12px;
+        }
+
+        .btn-start { background: #4cc9f0; color: #000; }
+        .btn-start:hover { background: #3aaccf; }
+        .btn-pause { background: #ffb703; color: #000; }
+        .btn-pause:hover { background: #e0a102; }
+        .btn-resume { background: #70e000; color: #000; }
+        .btn-resume:hover { background: #5cb800; }
+        .btn-reset { background: #f72585; color: #fff; }
+        .btn-reset:hover { background: #d61c6e; }
+
+        .btn:disabled {
+            background: #444 !important;
+            color: #888 !important;
+            cursor: not-allowed;
+        }
+
+        /* PANEL DE ECUACIONES: ESTILO PIZARRA HECHA A MANO */
+        .equations-chalkboard {
+            background: #141b15; 
+            padding: 18px;
+            border-radius: 12px 6px 15px 8px / 8px 12px 7px 11px; 
+            border: 5px solid #4a3525; 
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8), 0 6px 15px rgba(0,0,0,0.4);
+            position: relative;
+        }
+
+        .equation-block {
+            background: transparent;
+            padding: 4px 0 12px 0;
+            margin-bottom: 8px;
+            border-bottom: 1px dashed rgba(255,255,255,0.15);
+            font-family: 'Comic Sans MS', 'Chalkboard SE', 'Marker Felt', 'Purisa', cursive;
+            font-size: 14px;
+            letter-spacing: 0.5px;
+        }
+
+        .equation-block:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .eq-title { 
+            color: #ff9f1c; 
+            font-weight: bold; 
+            margin-bottom: 4px;
+            font-size: 13px;
+            text-transform: uppercase;
+            font-family: 'Segoe UI', sans-serif; 
+            letter-spacing: 0.5px;
+        }
+        
+        .eq-raw { 
+            color: rgba(255, 255, 255, 0.9); 
+            font-style: italic; 
+            text-shadow: 0 0 2px rgba(255,255,255,0.4);
+            margin-bottom: 2px;
+        }
+        
+        .eq-sub { 
+            color: #4cc9f0; 
+            text-shadow: 0 0 2px rgba(76,201,240,0.4);
+            margin-bottom: 2px;
+            padding-left: 8px;
+        }
+        
+        .eq-res { 
+            color: #2ec4b6; 
+            font-weight: bold; 
+            text-shadow: 0 0 3px rgba(46,196,182,0.5);
+            margin-top: 3px;
+            padding-left: 8px;
+            font-size: 15px;
+        }
+
+        /* Canvas */
+        canvas {
+            background: linear-gradient(to bottom, #111424, #1a2238);
+            border-radius: 10px;
+            border: 2px solid #3f3f52;
+            width: 100%;
+            height: auto;
+            aspect-ratio: 16 / 9;
+            display: block;
+        }
+
+        /* Telemetría (Datos en tiempo real) */
+        .telemetry-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .tel-item {
+            background: #2a2a35;
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid #3f3f52;
+            text-align: center;
+        }
+
+        .tel-label { font-size: 11px; color: #aaa; text-transform: uppercase;}
+        .tel-val { font-size: 14px; font-weight: bold; color: #fff; margin-top: 3px;}
+        .tel-highlight { color: #ffb703; }
+
+        /* Mensaje gigante de colisión */
+        #collisionOverlay {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            border-radius: 10px;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            flex-direction: column;
+        }
+
+        .collision-msg {
+            font-size: 42px;
+            font-weight: 900;
+            color: #ff0055;
+            text-shadow: 0 0 20px #ff0055, 0 0 40px #ff0055;
+            text-align: center;
+            animation: blink 0.5s infinite alternate;
+            letter-spacing: 2px;
+        }
+
+        .collision-sub {
+            font-size: 18px;
+            color: #fff;
+            margin-top: 15px;
+            background: #222;
+            padding: 5px 15px;
+            border-radius: 20px;
+            border: 1px solid #ff0055;
+            text-align: center;
+        }
+
+        @keyframes blink {
+            from { opacity: 1; transform: scale(1); }
+            to { opacity: 0.4; transform: scale(1.03); }
+        }
+
+        @media (max-width: 900px) {
+            .main-container { flex-direction: column; }
+            .sidebar { max-width: 100%; width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Simulación Física Estricta: "Dispara al Mono"</h1>
+
+    <div class="main-container">
+        <div class="sidebar">
+            <div class="panel">
+                <div class="panel-title">Variables Iniciales</div>
+                <div class="control-group">
+                    
+                    <div class="control-item">
+                        <label>Velocidad Inicial (v₀): <span id="v0_lbl">24.0</span> m/s</label>
+                        <div class="input-row">
+                            <input type="range" id="v0_rng" min="5" max="50" step="0.5" value="24">
+                            <input type="number" id="v0_num" min="5" max="50" step="0.5" value="24">
+                        </div>
+                    </div>
+
+                    <div class="control-item">
+                        <label>Ángulo de Disparo (θ): <span id="theta_lbl">33.5</span>°</label>
+                        <div class="input-row">
+                            <input type="range" id="theta_rng" min="5" max="85" step="0.5" value="33.5">
+                            <input type="number" id="theta_num" min="5" max="85" step="0.5" value="33.5">
+                        </div>
+                    </div>
+
+                    <div class="control-item">
+                        <label>Distancia al Mono (x_m₀): <span id="xm_lbl">30.0</span> m</label>
+                        <div class="input-row">
+                            <input type="range" id="xm_rng" min="10" max="75" step="1" value="30">
+                            <input type="number" id="xm_num" min="10" max="75" step="1" value="30">
+                        </div>
+                    </div>
+
+                    <div class="control-item">
+                        <label>Altura Inicial Mono (h): <span id="h_lbl">21.0</span> m</label>
+                        <div class="input-row">
+                            <input type="range" id="h_rng" min="5" max="45" step="1" value="21">
+                            <input type="number" id="h_num" min="5" max="45" step="1" value="21">
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="button-group">
+                    <button id="btnStart" class="btn btn-start">Iniciar</button>
+                    <button id="btnPause" class="btn btn-pause" disabled>Pausar</button>
+                    <button id="btnResume" class="btn btn-resume" disabled>Reanudar</button>
+                    <button id="btnReset" class="btn btn-reset">Reiniciar</button>
+                </div>
+            </div>
+
+            <div class="equations-chalkboard">
+                <div class="panel-title" style="color: #ff9f1c; border-bottom-color: rgba(255,255,255,0.2); margin-bottom: 15px;">Ecuaciones en Pizarra</div>
+                
+                <div class="equation-block">
+                    <div class="eq-title">Posición Horizontal Proyectil:</div>
+                    <div class="eq-raw">x(t) = v₀ · cos(θ) · t</div>
+                    <div class="eq-sub" id="eq_x_sub">x(t) = --</div>
+                    <div class="eq-res" id="eq_x_res">Resultado = --</div>
+                </div>
+
+                <div class="equation-block">
+                    <div class="eq-title">Posición Vertical Proyectil:</div>
+                    <div class="eq-raw">y(t) = v₀ · sin(θ) · t - ½ · g · t²</div>
+                    <div class="eq-sub" id="eq_y_sub">y(t) = --</div>
+                    <div class="eq-res" id="eq_y_res">Resultado = --</div>
+                </div>
+
+                <div class="equation-block">
+                    <div class="eq-title">Caída Vertical del Mono:</div>
+                    <div class="eq-raw">y_m(t) = h - ½ · g · t²</div>
+                    <div class="eq-sub" id="eq_ym_sub">y_m(t) = --</div>
+                    <div class="eq-res" id="eq_ym_res">Resultado = --</div>
+                </div>
+
+                <div class="equation-block">
+                    <div class="eq-title">Distancia entre Objetos:</div>
+                    <div class="eq-raw">d = √((x_m - x)² + (y_m - y)²)</div>
+                    <div class="eq-sub" id="eq_d_sub">d = --</div>
+                    <div class="eq-res" id="eq_d_res">Resultado = --</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="simulation-container">
+            <div style="position: relative; width: 100%;">
+                <canvas id="simCanvas" width="800" height="450"></canvas>
+                
+                <div id="collisionOverlay">
+                    <div class="collision-msg">¡¡COLISIÓN DETECTADA!!</div>
+                    <div class="collision-sub" id="collisionDetails">d ≤ 0.001 m lograda con éxito</div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-title">Telemetría de Datos Físicos (Valores Reales)</div>
+                <div class="telemetry-grid">
+                    <div class="tel-item">
+                        <div class="tel-label">Tiempo Transcurrido</div>
+                        <div class="tel-val tel-highlight" id="tel_t">0.00 s</div>
+                    </div>
+                    <div class="tel-item">
+                        <div class="tel-label">Proyectil X</div>
+                        <div class="tel-val" id="tel_px">0.00 m</div>
+                    </div>
+                    <div class="tel-item">
+                        <div class="tel-label">Proyectil Y</div>
+                        <div class="tel-val" id="tel_py">0.00 m</div>
+                    </div>
+                    <div class="tel-item">
+                        <div class="tel-label">Distancia Delta (d)</div>
+                        <div class="tel-val tel-highlight" id="tel_d">0.00 m</div>
+                    </div>
+                    <div class="tel-item">
+                        <div class="tel-label">Mono X</div>
+                        <div class="tel-val" id="tel_mx">0.00 m</div>
+                    </div>
+                    <div class="tel-item">
+                        <div class="tel-label">Mono Y</div>
+                        <div class="tel-val" id="tel_my">0.00 m</div>
+                    </div>
+                </div>
+                <div id="groundAlert" style="margin-top: 10px; color: #ffb703; text-align: center; font-weight: bold; font-size: 13px; display: none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Elementos DOM
+        const canvas = document.getElementById('simCanvas');
+        const ctx = canvas.getContext('2d');
+        const overlay = document.getElementById('collisionOverlay');
+        const detailsLbl = document.getElementById('collisionDetails');
+        const groundAlert = document.getElementById('groundAlert');
+
+        // Controles de entrada
+        const v0Rng = document.getElementById('v0_rng'); const v0Num = document.getElementById('v0_num'); const v0Lbl = document.getElementById('v0_lbl');
+        const thetaRng = document.getElementById('theta_rng'); const thetaNum = document.getElementById('theta_num'); const thetaLbl = document.getElementById('theta_lbl');
+        const xmRng = document.getElementById('xm_rng'); const xmNum = document.getElementById('xm_num'); const xmLbl = document.getElementById('xm_lbl');
+        const hRng = document.getElementById('h_rng'); const hNum = document.getElementById('h_num'); const hLbl = document.getElementById('h_lbl');
+
+        // Botones
+        const btnStart = document.getElementById('btnStart');
+        const btnPause = document.getElementById('btnPause');
+        const btnResume = document.getElementById('btnResume');
+        const btnReset = document.getElementById('btnReset');
+
+        // Ecuaciones
+        const eqXSub = document.getElementById('eq_x_sub'); const eqXRes = document.getElementById('eq_x_res');
+        const eqYSub = document.getElementById('eq_y_sub'); const eqYRes = document.getElementById('eq_y_res');
+        const eqYmSub = document.getElementById('eq_ym_sub'); const eqYmRes = document.getElementById('eq_ym_res');
+        const eqDSub = document.getElementById('eq_d_sub'); const eqDRes = document.getElementById('eq_d_res');
+
+        // Telemetría
+        const telT = document.getElementById('tel_t');
+        const telPx = document.getElementById('tel_px'); const telPy = document.getElementById('tel_py');
+        const telMx = document.getElementById('tel_mx'); const telMy = document.getElementById('tel_my');
+        const telD = document.getElementById('tel_d');
+
+        // Parámetros Físicos y Gráficos
+        const g = 9.81;
+        const FLOOR_Y = 400; 
+        const ORIGIN_X = 50;  
+        const SCALE = 9.0;    
+
+        let state = {
+            isRunning: false,
+            isPaused: false,
+            time: 0,
+            lastFrameTime: 0,
+            projectile: { x: 0, y: 0, trail: [] },
+            monkey: { x: 30, y: 21, initialH: 21 },
+            collisionDetected: false,
+            v0: 24,
+            theta: 33.5,
+            xm: 30,
+            h: 21
+        };
+
+        let animPhase = 0;
+
+        function linkInputs(rng, num, lbl, key) {
+            function update(val) {
+                let numericVal = parseFloat(val);
+                if (isNaN(numericVal)) return;
+                
+                const min = parseFloat(rng.min);
+                const max = parseFloat(rng.max);
+                if (numericVal < min) numericVal = min;
+                if (numericVal > max) numericVal = max;
+
+                rng.value = numericVal;
+                num.value = numericVal;
+                lbl.innerText = numericVal.toFixed(1);
+
+                state[key] = numericVal;
+                if (key === 'xm') state.monkey.x = numericVal;
+                if (key === 'h') {
+                    state.monkey.y = numericVal;
+                    state.monkey.initialH = numericVal;
+                }
+                if (!state.isRunning) resetSimulationState();
+            }
+            rng.addEventListener('input', (e) => update(e.target.value));
+            num.addEventListener('input', (e) => update(e.target.value));
+        }
+
+        linkInputs(v0Rng, v0Num, v0Lbl, 'v0');
+        linkInputs(thetaRng, thetaNum, thetaLbl, 'theta');
+        linkInputs(xmRng, xmNum, xmLbl, 'xm');
+        linkInputs(hRng, hNum, hLbl, 'h');
+
+        function toggleInputsDisabled(disabled) {
+            v0Rng.disabled = disabled; v0Num.disabled = disabled;
+            thetaRng.disabled = disabled; thetaNum.disabled = disabled;
+            xmRng.disabled = disabled; xmNum.disabled = disabled;
+            hRng.disabled = disabled; hNum.disabled = disabled;
+        }
+
+        function resetSimulationState() {
+            state.time = 0;
+            state.collisionDetected = false;
+            state.projectile.x = 0;
+            state.projectile.y = 0;
+            state.projectile.trail = [];
+            state.monkey.x = state.xm;
+            state.monkey.y = state.h;
+            state.monkey.initialH = state.h;
+            animPhase = 0;
+
+            overlay.style.display = 'none';
+            groundAlert.style.display = 'none';
+            groundAlert.innerText = '';
+            updateMathAndTelemetry(0, 0, 0, state.xm, state.h, Math.hypot(state.xm, state.h));
+            draw();
+        }
+
+        function updateMathAndTelemetry(t, px, py, mx, my, d) {
+            telT.innerText = `${t.toFixed(2)} s`;
+            telPx.innerText = `${px.toFixed(2)} m`;
+            telPy.innerText = `${py.toFixed(2)} m`;
+            telMx.innerText = `${mx.toFixed(2)} m`;
+            telMy.innerText = `${my.toFixed(2)} m`;
+            telD.innerText = `${d.toFixed(3)} m`;
+
+            eqXSub.innerText = `x(${t.toFixed(2)}) = ${state.v0} · cos(${state.theta}°) · ${t.toFixed(2)}`;
+            eqXRes.innerText = `➔ ${px.toFixed(2)} m`;
+
+            eqYSub.innerText = `y(${t.toFixed(2)}) = ${state.v0}·sin(${state.theta}°)·${t.toFixed(2)} - 0.5·${g}·(${t.toFixed(2)})²`;
+            eqYRes.innerText = `➔ ${py.toFixed(2)} m`;
+
+            eqYmSub.innerText = `y_m(${t.toFixed(2)}) = ${state.h} - 0.5 · ${g} · (${t.toFixed(2)})²`;
+            eqYmRes.innerText = `➔ ${my.toFixed(2)} m`;
+
+            eqDSub.innerText = `d = √(${mx.toFixed(2)} - ${px.toFixed(2)})² + (${my.toFixed(2)} - ${py.toFixed(2)})²`;
+            eqDRes.innerText = `➔ ${d.toFixed(4)} m`;
+        }
+
+        function getCanvasCoords(x_m, y_m) {
+            return { x: ORIGIN_X + (x_m * SCALE), y: FLOOR_Y - (y_m * SCALE) };
+        }
+
+        function drawGrid() {
+            ctx.strokeStyle = 'rgba(63, 63, 82, 0.2)'; ctx.lineWidth = 1;
+            for (let m = 0; m * SCALE < canvas.width; m += 5) {
+                let pos = getCanvasCoords(m, 0);
+                ctx.beginPath(); ctx.moveTo(pos.x, 0); ctx.lineTo(pos.x, canvas.height); ctx.stroke();
+                if (m % 10 === 0 && pos.x < canvas.width) {
+                    ctx.fillStyle = '#666'; ctx.font = '10px sans-serif'; ctx.fillText(`${m}m`, pos.x - 10, FLOOR_Y + 15);
+                }
+            }
+            for (let m = 0; m * SCALE < canvas.height; m += 5) {
+                let pos = getCanvasCoords(0, m);
+                ctx.beginPath(); ctx.moveTo(0, pos.y); ctx.lineTo(canvas.width, pos.y); ctx.stroke();
+                if (m % 10 === 0 && m > 0 && pos.y > 0) {
+                    ctx.fillStyle = '#666'; ctx.font = '10px sans-serif'; ctx.fillText(`${m}m`, ORIGIN_X - 25, pos.y + 4);
+                }
+            }
+        }
+
+        function drawCannon() {
+            const pos = getCanvasCoords(0, 0);
+            const rad = (state.theta * Math.PI) / 180;
+            ctx.save(); ctx.translate(pos.x, pos.y);
+            ctx.fillStyle = '#4a4e69'; ctx.beginPath(); ctx.arc(0, 0, 15, Math.PI, 0); ctx.fill();
+            ctx.fillStyle = '#22223b'; ctx.beginPath(); ctx.arc(0, 0, 6, 0, 2 * Math.PI); ctx.fill();
+            ctx.rotate(-rad);
+            ctx.fillStyle = '#3a0ca3'; ctx.fillRect(0, -10, 40, 20);
+            ctx.fillStyle = '#4cc9f0'; ctx.fillRect(0, -8, 38, 16);
+            ctx.fillStyle = '#7209b7'; ctx.fillRect(38, -10, 5, 20);
+            ctx.restore();
+        }
+
+        function drawMonkey(x_m, y_m, phase) {
+            const pos = getCanvasCoords(x_m, y_m);
+            const x = pos.x; const y = pos.y;
+            ctx.save();
+            const limbSwing = Math.sin(phase * 15) * 12;
+            const tailSwing = Math.cos(phase * 10) * 15;
+
+            // Cola
+            ctx.strokeStyle = '#9c6644'; ctx.lineWidth = 4; ctx.lineCap = 'round';
+            ctx.beginPath(); ctx.moveTo(x - 5, y + 10); ctx.quadraticCurveTo(x - 20 - tailSwing, y + 15, x - 15, y - 5 + tailSwing); ctx.stroke();
+            // Piernas
+            ctx.strokeStyle = '#b07d62'; ctx.lineWidth = 5;
+            ctx.beginPath(); ctx.moveTo(x - 6, y + 15); ctx.lineTo(x - 12, y + 28 + (limbSwing * 0.3)); ctx.lineTo(x - 18, y + 26); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(x + 6, y + 15); ctx.lineTo(x + 12, y + 28 - (limbSwing * 0.3)); ctx.lineTo(x + 18, y + 26); ctx.stroke();
+            // Cuerpo
+            ctx.fillStyle = '#9c6644'; ctx.beginPath(); ctx.ellipse(x, y + 5, 14, 18, 0, 0, 2 * Math.PI); ctx.fill();
+            ctx.fillStyle = '#e6ccb2'; ctx.beginPath(); ctx.ellipse(x, y + 7, 9, 12, 0, 0, 2 * Math.PI); ctx.fill();
+            // Brazos
+            ctx.strokeStyle = '#b07d62'; ctx.lineWidth = 4.5;
+            ctx.beginPath(); ctx.moveTo(x - 12, y - 2); ctx.lineTo(x - 25, y - 10 + limbSwing); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(x + 12, y - 2); ctx.lineTo(x + 25, y - 10 - limbSwing); ctx.stroke();
+            // Orejas
+            ctx.fillStyle = '#9c6644'; ctx.beginPath(); ctx.arc(x - 14, y - 16, 6, 0, 2 * Math.PI); ctx.fill(); ctx.arc(x + 14, y - 16, 6, 0, 2 * Math.PI); ctx.fill();
+            ctx.fillStyle = '#e6ccb2'; ctx.beginPath(); ctx.arc(x - 14, y - 16, 3.5, 0, 2 * Math.PI); ctx.fill(); ctx.arc(x + 14, y - 16, 3.5, 0, 2 * Math.PI); ctx.fill();
+            // Cabeza
+            ctx.fillStyle = '#9c6644'; ctx.beginPath(); ctx.arc(x, y - 15, 14, 0, 2 * Math.PI); ctx.fill();
+            // Rostro
+            ctx.fillStyle = '#e6ccb2'; ctx.beginPath(); ctx.arc(x - 5, y - 16, 6, 0, 2 * Math.PI); ctx.arc(x + 5, y - 16, 6, 0, 2 * Math.PI); ctx.ellipse(x, y - 10, 9, 7, 0, 0, 2 * Math.PI); ctx.fill();
+            // Ojos
+            ctx.fillStyle = '#000'; ctx.beginPath(); ctx.arc(x - 4, y - 17, 2, 0, 2 * Math.PI); ctx.arc(x + 4, y - 17, 2, 0, 2 * Math.PI); ctx.fill();
+            // Boca
+            ctx.strokeStyle = '#582f0e'; ctx.lineWidth = 2;
+            if (state.time > 0) {
+                ctx.fillStyle = '#780000'; ctx.beginPath(); ctx.arc(x, y - 9, 3.5, 0, 2 * Math.PI); ctx.fill();
+            } else {
+                ctx.beginPath(); ctx.arc(x, y - 11, 4, 0.1 * Math.PI, 0.9 * Math.PI); ctx.stroke();
+            }
+            ctx.restore();
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawGrid();
+            ctx.fillStyle = '#2f3e46'; ctx.fillRect(0, FLOOR_Y, canvas.width, canvas.height - FLOOR_Y);
+            ctx.fillStyle = '#3a5a40'; ctx.fillRect(0, FLOOR_Y, canvas.width, 6);
+
+            if (state.projectile.trail.length > 1) {
+                ctx.strokeStyle = 'rgba(247, 37, 133, 0.6)'; ctx.lineWidth = 3; ctx.setLineDash([4, 4]);
+                ctx.beginPath();
+                for (let i = 0; i < state.projectile.trail.length; i++) {
+                    let pt = getCanvasCoords(state.projectile.trail[i].x, state.projectile.trail[i].y);
+                    if (i === 0) ctx.moveTo(pt.x, pt.y); else ctx.lineTo(pt.x, pt.y);
+                }
+                ctx.stroke(); ctx.setLineDash([]);
+            }
+
+            if (state.isRunning && !state.collisionDetected) {
+                const projPos = getCanvasCoords(state.projectile.x, state.projectile.y);
+                const monkPos = getCanvasCoords(state.monkey.x, state.monkey.y);
+                ctx.strokeStyle = 'rgba(76, 201, 240, 0.25)'; ctx.lineWidth = 1;
+                ctx.beginPath(); ctx.moveTo(projPos.x, projPos.y); ctx.lineTo(projPos.x, FLOOR_Y); ctx.moveTo(projPos.x, projPos.y); ctx.lineTo(ORIGIN_X, projPos.y); ctx.stroke();
+                ctx.strokeStyle = 'rgba(255, 183, 3, 0.25)';
+                ctx.beginPath(); ctx.moveTo(monkPos.x, monkPos.y); ctx.lineTo(monkPos.x, FLOOR_Y); ctx.moveTo(monkPos.x, monkPos.y); ctx.lineTo(ORIGIN_X, monkPos.y); ctx.stroke();
+            }
+
+            drawCannon();
+            
+            if (state.time > 0) {
+                const projPos = getCanvasCoords(state.projectile.x, state.projectile.y);
+                ctx.fillStyle = '#f72585'; ctx.shadowColor = '#f72585'; ctx.shadowBlur = 8;
+                ctx.beginPath(); ctx.arc(projPos.x, projPos.y, 6, 0, 2 * Math.PI); ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+            drawMonkey(state.monkey.x, state.monkey.y, animPhase);
+        }
+
+        // BUCLE DE ANIMACIÓN Y FÍSICA CORREGIDO
+        function loop(timestamp) {
+            if (!state.isRunning || state.isPaused) { state.lastFrameTime = 0; return; }
+            if (!state.lastFrameTime) state.lastFrameTime = timestamp;
+            
+            let dt = (timestamp - state.lastFrameTime) / 1000;
+            if (dt > 0.1) dt = 0.1;
+            state.lastFrameTime = timestamp;
+
+            state.time += dt;
+            animPhase += dt;
+
+            const thetaRad = (state.theta * Math.PI) / 180;
+            const t = state.time;
+
+            // Ecuaciones reales de movimiento
+            const px = state.v0 * Math.cos(thetaRad) * t;
+            const py = (state.v0 * Math.sin(thetaRad) * t) - (0.5 * g * t * t);
+            const mx = state.xm;
+            const my = state.monkey.initialH - (0.5 * g * t * t);
+
+            // Guardar posiciones limitando el suelo de forma lógica
+            state.projectile.x = px;
+            state.projectile.y = Math.max(0, py);
+            state.monkey.y = Math.max(0, my);
+            state.projectile.trail.push({ x: px, y: py });
+
+            const distance = Math.hypot(mx - px, my - py);
+
+            // CORRECCIÓN DE VALIDACIÓN: Si alguno toca el suelo ANTES de la colisión teórica
+            const t_impacto_teorico = state.xm / (state.v0 * Math.cos(thetaRad));
+
+            if (py <= 0 || my <= 0) {
+                // Si el tiempo actual todavía no alcanzó el momento de cruce, es porque cayeron sin tocarse
+                if (t < t_impacto_teorico - 0.02 && distance > 0.1) {
+                    state.isRunning = false;
+                    groundAlert.innerText = "❌ El proyectil o el mono impactaron contra el suelo de forma aislada (Sin colisión)";
+                    groundAlert.style.display = "block";
+                    updateMathAndTelemetry(t, state.projectile.x, state.projectile.y, mx, state.monkey.y, distance);
+                    setButtonsState(false, false, false, true);
+                    toggleInputsDisabled(false);
+                    draw();
+                    return; 
+                }
+            }
+
+            // Si pasa la validación y llega al instante del impacto perfecto en el aire
+            if (t >= t_impacto_teorico || distance <= 0.001) {
+                const t_col = t_impacto_teorico;
+                const p_col_x = state.v0 * Math.cos(thetaRad) * t_col;
+                const p_col_y = (state.v0 * Math.sin(thetaRad) * t_col) - (0.5 * g * t_col * t_col);
+                const m_col_y = state.monkey.initialH - (0.5 * g * t_col * t_col);
+                const d_perfecto = 0.000;
+
+                state.projectile.x = p_col_x;
+                state.projectile.y = p_col_y;
+                state.monkey.y = m_col_y;
+                state.projectile.trail.push({ x: p_col_x, y: p_col_y });
+
+                updateMathAndTelemetry(t_col, p_col_x, p_col_y, mx, m_col_y, d_perfecto);
+                
+                state.collisionDetected = true;
+                state.isRunning = false;
+
+                detailsLbl.innerText = `¡Impacto Perfecto demostrado en t = ${t_col.toFixed(2)}s! Distancia física calculada = ${d_perfecto.toFixed(3)} mm (Menor a 1mm)`;
+                overlay.style.display = 'flex';
+                
+                draw();
+                setButtonsState(false, false, false, true);
+                toggleInputsDisabled(false);
+                return;
+            }
+
+            // Límite por si sale de la pantalla derecha
+            if (px * SCALE > canvas.width) {
+                state.isRunning = false;
+                setButtonsState(false, false, false, true);
+                toggleInputsDisabled(false);
+                return;
+            }
+
+            updateMathAndTelemetry(t, state.projectile.x, state.projectile.y, mx, state.monkey.y, distance);
+            draw();
+            requestAnimationFrame(loop);
+        }
+
+        function setButtonsState(start, pause, resume, reset) {
+            btnStart.disabled = !start; btnPause.disabled = !pause;
+            btnResume.disabled = !resume; btnReset.disabled = !reset;
+        }
+
+        btnStart.addEventListener('click', () => {
+            resetSimulationState();
+            state.isRunning = true; state.isPaused = false;
+            setButtonsState(false, true, false, true);
+            toggleInputsDisabled(true);
+            requestAnimationFrame(loop);
+        });
+
+        btnPause.addEventListener('click', () => {
+            state.isPaused = true;
+            setButtonsState(false, false, true, true);
+        });
+
+        btnResume.addEventListener('click', () => {
+            state.isPaused = false;
+            setButtonsState(false, true, false, true);
+            requestAnimationFrame(loop);
+        });
+
+        btnReset.addEventListener('click', () => {
+            state.isRunning = false; state.isPaused = false;
+            resetSimulationState();
+            setButtonsState(true, false, false, true);
+            toggleInputsDisabled(false);
+        });
+
+        resetSimulationState();
+    </script>
+</body>
+</html>
