@@ -257,8 +257,6 @@ Gestiona toda la lógica de la simulación:
 Con este proyecto fue posible aplicar conceptos de física y programación para representar visualmente el movimiento parabólico y la caída libre. Además, permitió integrar cálculos matemáticos, animaciones y elementos interactivos dentro de una aplicación web funcional.
 
 
-P.D: El codigo final se encuentra en la rama Allysson
-
 
 
 \*
