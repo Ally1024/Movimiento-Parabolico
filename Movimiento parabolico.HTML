@@ -195,12 +195,12 @@
             margin-bottom: 4px;
             font-size: 13px;
             text-transform: uppercase;
-            font-family: 'Segoe UI', sans-serif; 
+            font-family: 'Segoe UI', sans-serif;
         }
         
         .eq-raw { 
             color: rgba(255, 255, 255, 0.9);
-            font-style: italic; 
+            font-style: italic;
             margin-bottom: 2px;
         }
         
@@ -394,6 +394,7 @@
             <div class="panel">
                 <div class="panel-title">Variables Iniciales</div>
                 <div class="control-group">
+                 
                     <div class="control-item">
                         <label>Velocidad Inicial v₀: <span id="v0_lbl">24.0</span> m/s</label>
                         <div class="input-row">
@@ -533,7 +534,6 @@
         const thetaRng = document.getElementById('theta_rng'); const thetaNum = document.getElementById('theta_num'); const thetaLbl = document.getElementById('theta_lbl');
         const xmRng = document.getElementById('xm_rng'); const xmNum = document.getElementById('xm_num'); const xmLbl = document.getElementById('xm_lbl');
         const hRng = document.getElementById('h_rng'); const hNum = document.getElementById('h_num'); const hLbl = document.getElementById('h_lbl');
-
         const btnStart = document.getElementById('btnStart'); const btnPause = document.getElementById('btnPause');
         const btnResume = document.getElementById('btnResume'); const btnReset = document.getElementById('btnReset');
 
@@ -548,10 +548,10 @@
         const telD = document.getElementById('tel_d');
 
         // --- PARÁMETROS Y VARIABLES DE CONFIGURACIÓN FÍSICA ---
-        const g = 9.81;        
+        const g = 9.81;
         const FLOOR_Y = 400;   
         const ORIGIN_X = 50;   
-        const SCALE = 9.0;     
+        const SCALE = 9.0;
 
         let state = {
             isRunning: false,            
@@ -622,7 +622,6 @@
             overlay.style.display = 'none';
             groundAlert.style.display = 'none';
             groundAlert.innerText = '';
-            
             updateMathAndTelemetry(0, 0, 0, state.xm, state.h, Math.hypot(state.xm, state.h));
             draw();
         }
@@ -636,13 +635,13 @@
             telMy.innerText = `${my.toFixed(2)} m`;
             telD.innerText = `${d.toFixed(3)} m`;
 
-            eqXSub.innerText = `x t = ${state.v0} · cos ${state.theta}° · ${t.toFixed(2)}`;
+            eqXSub.innerText = `x(t) = ${state.v0} · cos(${state.theta}°) · ${t.toFixed(2)}`;
             eqXRes.innerText = `➔ ${px.toFixed(2)} m`;
-            eqYSub.innerText = `y t = ${state.v0} · sin ${state.theta}° · ${t.toFixed(2)} - 0.5 · ${g} · ${t.toFixed(2)}²`;
+            eqYSub.innerText = `y(t) = ${state.v0} · sin(${state.theta}°) · ${t.toFixed(2)} - 0.5 · ${g} · ${t.toFixed(2)}²`;
             eqYRes.innerText = `➔ ${py.toFixed(2)} m`;
-            eqYmSub.innerText = `y_m t = ${state.h} - 0.5 · ${g} · ${t.toFixed(2)}²`;
+            eqYmSub.innerText = `y_m(t) = ${state.h} - 0.5 · ${g} · ${t.toFixed(2)}²`;
             eqYmRes.innerText = `➔ ${my.toFixed(2)} m`;
-            eqDSub.innerText = `d = √ ${mx.toFixed(2)} - ${px.toFixed(2)} ² + ${my.toFixed(2)} - ${py.toFixed(2)} ²`;
+            eqDSub.innerText = `d = √(${mx.toFixed(2)} - ${px.toFixed(2)})² + (${my.toFixed(2)} - ${py.toFixed(2)})²`;
             eqDRes.innerText = `➔ ${d.toFixed(4)} m`;
         }
 
@@ -689,6 +688,43 @@
             ctx.restore();
         }
 
+        // --- MOTOR GRÁFICO: DIBUJO DEL PROYECTIL (BANANO VECTORIAL) ---
+        function drawBanana(x_cx, y_cy) {
+            ctx.save();
+            ctx.translate(x_cx, y_cy);
+            // El banano va rotando un poco dinámicamente con el tiempo para realismo gráfico
+            ctx.rotate(state.time * 5); 
+
+            ctx.shadowColor = 'rgba(255, 230, 0, 0.5)';
+            ctx.shadowBlur = 6;
+
+            // Cuerpo principal amarillo del banano
+            ctx.fillStyle = '#ffd166';
+            ctx.beginPath();
+            ctx.moveTo(-12, -4);
+            ctx.bezierCurveTo(-5, -14, 8, -10, 14, 2);
+            ctx.bezierCurveTo(6, 0, -4, -1, -12, -4);
+            ctx.fill();
+
+            // Extremo superior (tallo marrón)
+            ctx.fillStyle = '#6f4e37';
+            ctx.beginPath();
+            ctx.moveTo(-12, -4);
+            ctx.lineTo(-15, -5);
+            ctx.lineTo(-14, -2);
+            ctx.fill();
+
+            // Extremo inferior (punta marrón)
+            ctx.fillStyle = '#4a3525';
+            ctx.beginPath();
+            ctx.moveTo(14, 2);
+            ctx.lineTo(16, 4);
+            ctx.lineTo(13, 5);
+            ctx.fill();
+
+            ctx.restore();
+        }
+
         // --- MOTOR GRÁFICO: PROCESAMIENTO VECTORIAL DEL MONO (CHALUPITA) ---
         function drawMonkey(x_m, y_m, phase) {
             const pos = getCanvasCoords(x_m, y_m);
@@ -707,54 +743,50 @@
             }
 
             ctx.strokeStyle = '#9c6644';
-            ctx.lineWidth = 4; ctx.lineCap = 'round';
+            ctx.lineWidth = 4;
+            ctx.lineCap = 'round';
             ctx.beginPath(); ctx.moveTo(x - 5, y + 10);
             ctx.quadraticCurveTo(x - 20 - tailSwing, y + 15, x - 15, y - 5 + tailSwing); ctx.stroke();
             
-            ctx.strokeStyle = '#b07d62'; ctx.lineWidth = 5;
+            ctx.strokeStyle = '#b07d62';
+            ctx.lineWidth = 5;
             ctx.beginPath();
             ctx.moveTo(x - 6, y + 15); ctx.lineTo(x - 12, y + 28 + (limbSwing * 0.3));
             ctx.lineTo(x - 18, y + 26); ctx.stroke();
             ctx.beginPath(); ctx.moveTo(x + 6, y + 15);
             ctx.lineTo(x + 12, y + 28 - (limbSwing * 0.3)); ctx.lineTo(x + 18, y + 26); ctx.stroke();
             
-            ctx.fillStyle = '#9c6644'; ctx.beginPath();
+            ctx.fillStyle = '#9c6644';
+            ctx.beginPath();
             ctx.ellipse(x, y + 5, 14, 18, 0, 0, 2 * Math.PI); ctx.fill();
             ctx.fillStyle = '#e6ccb2'; ctx.beginPath();
             ctx.ellipse(x, y + 7, 9, 12, 0, 0, 2 * Math.PI); ctx.fill();
             
-            ctx.strokeStyle = '#b07d62'; ctx.lineWidth = 4.5;
-            ctx.beginPath();
-            ctx.moveTo(x - 12, y - 2); ctx.lineTo(x - 25, y - 10 + limbSwing); ctx.stroke();
-            ctx.beginPath();
-            ctx.moveTo(x + 12, y - 2); ctx.lineTo(x + 25, y - 10 - limbSwing); ctx.stroke();
+            ctx.strokeStyle = '#b07d62'; ctx.lineWidth = 4.5; 
+            ctx.beginPath(); ctx.moveTo(x - 12, y - 2); ctx.lineTo(x - 25, y - 10 + limbSwing); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(x + 12, y - 2); ctx.lineTo(x + 25, y - 10 - limbSwing); ctx.stroke();
             
-            ctx.fillStyle = '#9c6644'; ctx.beginPath();
-            ctx.arc(x - 14, y - 16, 6, 0, 2 * Math.PI); ctx.fill();
+            ctx.fillStyle = '#9c6644';
+            ctx.beginPath(); ctx.arc(x - 14, y - 16, 6, 0, 2 * Math.PI); ctx.fill();
             ctx.arc(x + 14, y - 16, 6, 0, 2 * Math.PI); ctx.fill();
-            ctx.fillStyle = '#e6ccb2'; ctx.beginPath();
-            ctx.arc(x - 14, y - 16, 3.5, 0, 2 * Math.PI); ctx.fill();
+            ctx.fillStyle = '#e6ccb2';
+            ctx.beginPath(); ctx.arc(x - 14, y - 16, 3.5, 0, 2 * Math.PI); ctx.fill();
             ctx.arc(x + 14, y - 16, 3.5, 0, 2 * Math.PI); ctx.fill();
             
-            ctx.fillStyle = '#9c6644'; ctx.beginPath();
-            ctx.arc(x, y - 15, 14, 0, 2 * Math.PI); ctx.fill();
-            
-            ctx.fillStyle = '#e6ccb2'; ctx.beginPath();
-            ctx.arc(x - 5, y - 16, 6, 0, 2 * Math.PI);
-            ctx.arc(x + 5, y - 16, 6, 0, 2 * Math.PI);
+            ctx.fillStyle = '#9c6644';
+            ctx.beginPath(); ctx.arc(x, y - 15, 14, 0, 2 * Math.PI); ctx.fill();
+            ctx.fillStyle = '#e6ccb2';
+            ctx.beginPath(); ctx.arc(x - 5, y - 16, 6, 0, 2 * Math.PI); ctx.arc(x + 5, y - 16, 6, 0, 2 * Math.PI);
             ctx.ellipse(x, y - 10, 9, 7, 0, 0, 2 * Math.PI); ctx.fill();
             
-            ctx.fillStyle = '#000'; ctx.beginPath();
-            ctx.arc(x - 4, y - 17, 2, 0, 2 * Math.PI);
-            ctx.arc(x + 4, y - 17, 2, 0, 2 * Math.PI); ctx.fill();
+            ctx.fillStyle = '#000';
+            ctx.beginPath(); ctx.arc(x - 4, y - 17, 2, 0, 2 * Math.PI); ctx.arc(x + 4, y - 17, 2, 0, 2 * Math.PI); ctx.fill();
             
             ctx.strokeStyle = '#582f0e'; ctx.lineWidth = 2;
             if (state.time > 0) {
-                ctx.fillStyle = '#780000';
-                ctx.beginPath(); ctx.arc(x, y - 9, 3.5, 0, 2 * Math.PI); ctx.fill();
+                ctx.fillStyle = '#780000'; ctx.beginPath(); ctx.arc(x, y - 9, 3.5, 0, 2 * Math.PI); ctx.fill();
             } else {
-                ctx.beginPath();
-                ctx.arc(x, y - 11, 4, 0.1 * Math.PI, 0.9 * Math.PI); ctx.stroke();
+                ctx.beginPath(); ctx.arc(x, y - 11, 4, 0.1 * Math.PI, 0.9 * Math.PI); ctx.stroke();
             }
             ctx.restore();
         }
@@ -763,52 +795,87 @@
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             drawGrid();
-
+            
             ctx.fillStyle = '#232f34'; ctx.fillRect(0, FLOOR_Y, canvas.width, canvas.height - FLOOR_Y);
             ctx.fillStyle = '#3a5a40'; ctx.fillRect(0, FLOOR_Y, canvas.width, 6);
-            
+
+            const monkPos = getCanvasCoords(state.monkey.x, state.monkey.y);
+            const cannonOrigin = getCanvasCoords(0, 0);
+
+            // --- NUEVA MEJORA: MIRA LÁSER FIJA ANTES DE DISPARAR ---
+            if (state.time === 0) {
+                ctx.strokeStyle = 'rgba(255, 0, 85, 0.65)';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([6, 6]);
+                ctx.beginPath();
+                ctx.moveTo(cannonOrigin.x, cannonOrigin.y);
+                ctx.lineTo(monkPos.x, monkPos.y); // Apunta directo al centro inicial del mono
+                ctx.stroke();
+                ctx.setLineDash([]);
+
+                // Punto de mira láser sobre el mono
+                ctx.fillStyle = '#ff0055';
+                ctx.shadowColor = '#ff0055';
+                ctx.shadowBlur = 10;
+                ctx.beginPath();
+                ctx.arc(monkPos.x, monkPos.y, 5, 0, 2 * Math.PI);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+
+            // Dibujo de la estela del proyectil
             if (state.projectile.trail.length > 1) {
-                ctx.strokeStyle = 'rgba(247, 37, 133, 0.6)';
-                ctx.lineWidth = 3; ctx.setLineDash([4, 4]);
+                ctx.strokeStyle = 'rgba(255, 210, 0, 0.45)';
+                ctx.lineWidth = 3;
+                ctx.setLineDash([4, 4]);
                 ctx.beginPath();
                 for (let i = 0; i < state.projectile.trail.length; i++) {
                     let pt = getCanvasCoords(state.projectile.trail[i].x, state.projectile.trail[i].y);
-                    if (i === 0) ctx.moveTo(pt.x, pt.y); else ctx.lineTo(pt.x, pt.y);
+                    if (i === 0) ctx.moveTo(pt.x, pt.y);
+                    else ctx.lineTo(pt.x, pt.y);
                 }
                 ctx.stroke();
                 ctx.setLineDash([]);
             }
 
+            // Guías métricas dinámicas durante el movimiento
             if (state.isRunning && !state.collisionDetected) {
                 const projPos = getCanvasCoords(state.projectile.x, state.projectile.y);
-                const monkPos = getCanvasCoords(state.monkey.x, state.monkey.y);
                 ctx.strokeStyle = 'rgba(76, 201, 240, 0.15)'; ctx.lineWidth = 1;
-                ctx.beginPath(); ctx.moveTo(projPos.x, projPos.y); ctx.lineTo(projPos.x, FLOOR_Y);
-                ctx.moveTo(projPos.x, projPos.y); ctx.lineTo(ORIGIN_X, projPos.y); ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(projPos.x, projPos.y); ctx.lineTo(projPos.x, FLOOR_Y);
+                ctx.moveTo(projPos.x, projPos.y); ctx.lineTo(ORIGIN_X, projPos.y);
+                ctx.stroke();
+
                 ctx.strokeStyle = 'rgba(255, 183, 3, 0.15)';
-                ctx.beginPath(); ctx.moveTo(monkPos.x, monkPos.y); ctx.lineTo(monkPos.x, FLOOR_Y); ctx.moveTo(monkPos.x, monkPos.y); ctx.lineTo(ORIGIN_X, monkPos.y);
+                ctx.beginPath();
+                ctx.moveTo(monkPos.x, monkPos.y); ctx.lineTo(monkPos.x, FLOOR_Y);
+                ctx.moveTo(monkPos.x, monkPos.y); ctx.lineTo(ORIGIN_X, monkPos.y);
                 ctx.stroke();
             }
 
             drawCannon();
-            
+
+            // Dibujo del Proyectil (Ahora es un Banano si ya se disparó)
             if (state.time > 0) {
                 const projPos = getCanvasCoords(state.projectile.x, state.projectile.y);
-                ctx.fillStyle = '#f72585'; ctx.shadowColor = '#f72585'; ctx.shadowBlur = 8;
-                ctx.beginPath(); ctx.arc(projPos.x, projPos.y, 6, 0, 2 * Math.PI); ctx.fill();
-                ctx.shadowBlur = 0;
+                drawBanana(projPos.x, projPos.y);
             }
-            
+
             drawMonkey(state.monkey.x, state.monkey.y, animPhase);
         }
 
         // --- BUCLE DE ANIMACIÓN CENTRAL Y CÁLCULO DE ECUACIONES FÍSICAS ---
         function loop(timestamp) {
-            if (!state.isRunning || state.isPaused) { state.lastFrameTime = 0; return; }
+            if (!state.isRunning || state.isPaused) {
+                state.lastFrameTime = 0;
+                return;
+            }
             if (!state.lastFrameTime) state.lastFrameTime = timestamp;
             let dt = (timestamp - state.lastFrameTime) / 1000;
-            if (dt > 0.1) dt = 0.1; 
+            if (dt > 0.1) dt = 0.1;
             state.lastFrameTime = timestamp;
+
             state.time += dt;
             animPhase += dt;
 
@@ -821,23 +888,27 @@
             const my = state.monkey.initialH - (0.5 * g * t * t);
 
             const distance = Math.hypot(mx - px, my - py);
-            
             const cosTheta = Math.cos(thetaRad);
             const t_impacto_teorico = Math.abs(cosTheta) < 0.0001 ? Infinity : state.xm / (state.v0 * cosTheta);
+
+            state.projectile.x = px;
+            state.projectile.y = py;
+            state.monkey.y = my;
+            state.projectile.trail.push({ x: px, y: py });
+
+            updateMathAndTelemetry(t, px, py, mx, my, distance);
 
             if (distance <= 2.5) {
                 state.projectile.x = mx;
                 state.projectile.y = py;
                 state.monkey.y = my;
                 state.projectile.trail.push({ x: mx, y: py });
-
                 updateMathAndTelemetry(t, mx, py, mx, my, distance);
+
                 state.collisionDetected = true;
                 state.isRunning = false;
-
-                detailsLbl.innerText = `Impacto Detectado con éxito en t = ${t.toFixed(2)}s\nDistancia real d = ${distance.toFixed(3)} m Cuerpo alcanzado`;
+                detailsLbl.innerText = `Impacto Detectado con éxito en t = ${t.toFixed(2)}s\nDistancia real d = ${distance.toFixed(3)} m\n¡El mono atrapó el banano!`;
                 overlay.style.display = 'flex';
-                
                 draw();
                 setButtonsState(false, false, false, true);
                 toggleInputsDisabled(false);
@@ -846,177 +917,86 @@
 
             if (state.theta < 90 && t >= t_impacto_teorico) {
                 state.isRunning = false;
-                groundAlert.innerText = "Fallo: El proyectil cruzó la línea del mono por una altura distinta y falló el tiro.";
+                groundAlert.innerText = "Fallo: El banano cruzó la línea del mono por una altura distinta y falló el tiro.";
                 groundAlert.style.display = "block";
-                
-                state.projectile.x = px;
-                state.projectile.y = Math.max(0, py);
+                state.projectile.x = px; state.projectile.y = Math.max(0, py);
                 state.monkey.y = Math.max(0, my);
-                
                 updateMathAndTelemetry(t, state.projectile.x, state.projectile.y, mx, state.monkey.y, distance);
-                setButtonsState(false, false, false, true);
-                toggleInputsDisabled(false);
-                draw();
-                return;
+                setButtonsState(false, false, false, true); toggleInputsDisabled(false);
+                draw(); return;
             }
 
             if (py <= 0 || my <= 0 || (px * SCALE) < -ORIGIN_X) {
                 state.isRunning = false;
-                groundAlert.innerText = "Trayectoria terminada: El proyectil o el mono tocaron el suelo sin encontrarse.";
+                groundAlert.innerText = "Trayectoria terminada: El banano o el mono tocaron el suelo sin encontrarse.";
                 groundAlert.style.display = "block";
-                
-                state.projectile.x = px;
-                state.projectile.y = Math.max(0, py);
+                state.projectile.x = px; state.projectile.y = Math.max(0, py);
                 state.monkey.y = Math.max(0, my);
-                
                 updateMathAndTelemetry(t, state.projectile.x, state.projectile.y, mx, state.monkey.y, distance);
-                setButtonsState(false, false, false, true);
-                toggleInputsDisabled(false);
-                draw();
-                return;
+                setButtonsState(false, false, false, true); toggleInputsDisabled(false);
+                draw(); return;
             }
 
-            state.projectile.x = px;
-            state.projectile.y = py;
-            state.monkey.y = my;
-            state.projectile.trail.push({ x: px, y: py });
-
-            if (px * SCALE > canvas.width) {
-                state.isRunning = false;
-                setButtonsState(false, false, false, true);
-                toggleInputsDisabled(false);
-                return;
-            }
-
-            updateMathAndTelemetry(t, state.projectile.x, state.projectile.y, mx, state.monkey.y, distance);
             draw();
             requestAnimationFrame(loop);
         }
 
-        // --- MOTOR DE DESGLOSE MATEMÁTICO DETALLADO (MODAL) ---
+        // --- SISTEMA INTERACTIVO DE VENTANAS MODALES (PIZARRA) ---
         function openMathModal(equationType) {
-            const modal = document.getElementById('mathModal');
-            const title = document.getElementById('modalTitle');
-            const body = document.getElementById('modalBody');
-            
             const t = state.time;
-            const rad = (state.theta * Math.PI) / 180;
-            const cosVal = Math.cos(rad);
-            const sinVal = Math.sin(rad);
-            
-            const px = state.v0 * cosVal * t;
-            const py = (state.v0 * sinVal * t) - (0.5 * g * t * t);
+            const thetaRad = (state.theta * Math.PI) / 180;
+            const px = state.v0 * Math.cos(thetaRad) * t;
+            const py = (state.v0 * Math.sin(thetaRad) * t) - (0.5 * g * t * t);
             const mx = state.xm;
             const my = state.monkey.initialH - (0.5 * g * t * t);
-            const distance = Math.hypot(mx - px, my - py);
+            const d = Math.hypot(mx - px, my - py);
 
-            let htmlContent = "";
+            let title = "";
+            let bodyHtml = "";
 
             if (equationType === 'x') {
-                title.innerText = "Desglose: Posición Horizontal Proyectil";
-                htmlContent = `
-                    <div class="math-step">
-                        <div class="math-step-title">1. Fórmula Teórica</div>
-                        <div>x(t) = v₀ · cos(θ) · t</div>
-                    </div>
-                    <div class="math-step">
-                        <div class="math-step-title">2. Sustitución de Variables</div>
-                        <div>x(${t.toFixed(2)}) = ${state.v0} · cos(${state.theta}°) · ${t.toFixed(2)}</div>
-                    </div>
-                    <div class="math-step">
-                        <div class="math-step-title">3. Evaluación de Componente Angular</div>
-                        <div>cos(${state.theta}°) = ${cosVal.toFixed(4)}</div>
-                        <div>v_x = ${state.v0} · ${cosVal.toFixed(4)} = ${(state.v0 * cosVal).toFixed(3)} m/s</div>
-                    </div>
-                    <div class="math-step">
-                        <div class="math-step-title">4. Operación Final (Velocidad x Tiempo)</div>
-                        <div>x = ${(state.v0 * cosVal).toFixed(3)} · ${t.toFixed(2)}</div>
-                        <div style="color: #2ec4b6; font-weight: bold; margin-top: 4px;">Resultado: x = ${px.toFixed(4)} metros</div>
-                    </div>
+                title = "Posición Horizontal del Proyectil (MRU)";
+                bodyHtml = `
+                    <div class="math-step"><div class="math-step-title">Fórmula General:</div>x(t) = v₀ · cos(θ) · t</div>
+                    <div class="math-step"><div class="math-step-title">Sustitución de Valores:</div>x = ${state.v0} · cos(${state.theta}°) · ${t.toFixed(4)}</div>
+                    <div class="math-step"><div class="math-step-title">Evaluación Trigonométrica:</div>cos(${state.theta}°) = ${Math.cos(thetaRad).toFixed(4)}</div>
+                    <div class="math-step"><div class="math-step-title">Multiplicación Final:</div>x = ${(state.v0 * Math.cos(thetaRad)).toFixed(4)} · ${t.toFixed(4)}</div>
+                    <div class="math-step" style="border-left-color: #2ec4b6;"><div class="math-step-title" style="color: #2ec4b6;">Resultado Obtenido:</div><strong>x = ${px.toFixed(4)} metros</strong></div>
                 `;
-            } 
-            else if (equationType === 'y') {
-                title.innerText = "Desglose: Posición Vertical Proyectil";
-                htmlContent = `
-                    <div class="math-step">
-                        <div class="math-step-title">1. Fórmula Teórica</div>
-                        <div>y(t) = v₀ · sin(θ) · t - ½ · g · t²</div>
-                    </div>
-                    <div class="math-step">
-                        <div class="math-step-title">2. Sustitución de Variables</div>
-                        <div>y(${t.toFixed(2)}) = ${state.v0} · sin(${state.theta}°) · ${t.toFixed(2)} - 0.5 · ${g} · (${t.toFixed(2)})²</div>
-                    </div>
-                    <div class="math-step">
-                        <div class="math-step-title">3. Cálculo de Componente Lineal Ascendente</div>
-                        <div>sin(${state.theta}°) = ${sinVal.toFixed(4)}</div>
-                        <div>Término 1 = ${state.v0} · ${sinVal.toFixed(4)} · ${t.toFixed(2)} = ${(state.v0 * sinVal * t).toFixed(3)} m</div>
-                    </div>
-                    <div class="math-step">
-                        <div class="math-step-title">4. Cálculo del Efecto de la Gravedad</div>
-                        <div>t² = ${(t * t).toFixed(4)} s²</div>
-                        <div>Término 2 = 0.5 · ${g} · ${(t * t).toFixed(4)} = ${(0.5 * g * t * t).toFixed(3)} m</div>
-                    </div>
-                    <div class="math-step">
-                        <div class="math-step-title">5. Resta de Componentes Vectores (Ascenso - Caída)</div>
-                        <div>y = ${(state.v0 * sinVal * t).toFixed(3)} - ${(0.5 * g * t * t).toFixed(3)}</div>
-                        <div style="color: #2ec4b6; font-weight: bold; margin-top: 4px;">Resultado: y = ${py.toFixed(4)} metros</div>
-                    </div>
+            } else if (equationType === 'y') {
+                title = "Posición Vertical del Proyectil (MRUV)";
+                bodyHtml = `
+                    <div class="math-step"><div class="math-step-title">Fórmula General:</div>y(t) = v₀ · sin(θ) · t - ½ · g · t²</div>
+                    <div class="math-step"><div class="math-step-title">Sustitución de Valores:</div>y = ${state.v0} · sin(${state.theta}°) · ${t.toFixed(4)} - 0.5 · ${g} · (${t.toFixed(4)})²</div>
+                    <div class="math-step"><div class="math-step-title">Componente de Subida:</div>v_y₀ · t = ${(state.v0 * Math.sin(thetaRad)).toFixed(4)} · ${t.toFixed(4)} = ${(state.v0 * Math.sin(thetaRad) * t).toFixed(4)} m</div>
+                    <div class="math-step"><div class="math-step-title">Componente Gravitatorio:</div>-½ · g · t² = -0.5 · 9.81 · ${(t*t).toFixed(4)} = -${(0.5 * g * t * t).toFixed(4)} m</div>
+                    <div class="math-step" style="border-left-color: #2ec4b6;"><div class="math-step-title" style="color: #2ec4b6;">Resultado Obtenido:</div><strong>y = ${py.toFixed(4)} metros</strong></div>
                 `;
-            } 
-            else if (equationType === 'ym') {
-                title.innerText = "Desglose: Caída Vertical del Mono";
-                htmlContent = `
-                    <div class="math-step">
-                        <div class="math-step-title">1. Fórmula Teórica</div>
-                        <div>y_m(t) = h - ½ · g · t²</div>
-                    </div>
-                    <div class="math-step">
-                        <div class="math-step-title">2. Sustitución de Variables</div>
-                        <div>y_m(${t.toFixed(2)}) = ${state.h} - 0.5 · ${g} · (${t.toFixed(2)})²</div>
-                    </div>
-                    <div class="math-step">
-                        <div class="math-step-title">3. Resolución del Término Gravitatorio</div>
-                        <div>t² = ${(t * t).toFixed(4)} s²</div>
-                        <div>Pérdida de Altura = 0.5 · ${g} · ${(t * t).toFixed(4)} = ${(0.5 * g * t * t).toFixed(3)} m</div>
-                    </div>
-                    <div class="math-step">
-                        <div class="math-step-title">4. Deducción de la Altura Actual</div>
-                        <div>y_m = ${state.h} - ${(0.5 * g * t * t).toFixed(3)}</div>
-                        <div style="color: #2ec4b6; font-weight: bold; margin-top: 4px;">Resultado: y_m = ${my.toFixed(4)} metros</div>
-                    </div>
+            } else if (equationType === 'ym') {
+                title = "Caída Libre Vertical del Mono";
+                bodyHtml = `
+                    <div class="math-step"><div class="math-step-title">Fórmula General:</div>y_m(t) = h - ½ · g · t²</div>
+                    <div class="math-step"><div class="math-step-title">Sustitución de Valores:</div>y_m = ${state.h} - 0.5 · ${g} · (${t.toFixed(4)})²</div>
+                    <div class="math-step"><div class="math-step-title">Altura Perdida por Gravedad:</div>½ · g · t² = 0.5 · 9.81 · ${(t*t).toFixed(4)} = ${(0.5 * g * t * t).toFixed(4)} m</div>
+                    <div class="math-step" style="border-left-color: #2ec4b6;"><div class="math-step-title" style="color: #2ec4b6;">Resultado Obtenido:</div><strong>y_m = ${my.toFixed(4)} metros</strong></div>
                 `;
-            } 
-            else if (equationType === 'd') {
-                title.innerText = "Desglose: Distancia entre Objetos";
-                htmlContent = `
-                    <div class="math-step">
-                        <div class="math-step-title">1. Fórmula Teórica (Métrica Euclidiana)</div>
-                        <div>d = √((x_m - x)² + (y_m - y)²)</div>
-                    </div>
-                    <div class="math-step">
-                        <div class="math-step-title">2. Sustitución de Posiciones Actuales</div>
-                        <div>Δx = ${mx.toFixed(2)} - ${px.toFixed(2)} = ${(mx - px).toFixed(3)} m</div>
-                        <div>Δy = ${my.toFixed(2)} - ${py.toFixed(2)} = ${(my - py).toFixed(3)} m</div>
-                    </div>
-                    <div class="math-step">
-                        <div class="math-step-title">3. Cuadrado de los Catetos</div>
-                        <div>(Δx)² = ${(Math.pow(mx - px, 2)).toFixed(3)}</div>
-                        <div>(Δy)² = ${(Math.pow(my - py, 2)).toFixed(3)}</div>
-                        <div>Suma Radicando = ${(Math.pow(mx - px, 2) + Math.pow(my - py, 2)).toFixed(3)}</div>
-                    </div>
-                    <div class="math-step">
-                        <div class="math-step-title">4. Extracción de Raíz Cuadrada</div>
-                        <div>d = √( ${(Math.pow(mx - px, 2) + Math.pow(my - py, 2)).toFixed(3)} )</div>
-                        <div style="color: #2ec4b6; font-weight: bold; margin-top: 4px;">Resultado: d = ${distance.toFixed(4)} metros</div>
-                    </div>
+            } else if (equationType === 'd') {
+                title = "Distancia Euclidiana Lineal (Pitágoras)";
+                bodyHtml = `
+                    <div class="math-step"><div class="math-step-title">Fórmula General:</div>d = √((x_m - x)² + (y_m - y)²)</div>
+                    <div class="math-step"><div class="math-step-title">Diferencias de Posición:</div>Δx = ${mx.toFixed(2)} - ${px.toFixed(2)} = ${(mx-px).toFixed(4)} m<br>Δy = ${my.toFixed(2)} - ${py.toFixed(2)} = ${(my-py).toFixed(4)} m</div>
+                    <div class="math-step"><div class="math-step-title">Elevación al Cuadrado:</div>(Δx)² = ${(Math.pow(mx-px, 2)).toFixed(4)}<br>(Δy)² = ${(Math.pow(my-py, 2)).toFixed(4)}</div>
+                    <div class="math-step"><div class="math-step-title">Suma de Catetos:</div>Suma = ${(Math.pow(mx-px, 2) + Math.pow(my-py, 2)).toFixed(4)}</div>
+                    <div class="math-step" style="border-left-color: #2ec4b6;"><div class="math-step-title" style="color: #2ec4b6;">Resultado Extracción Raíz:</div><strong>d = ${d.toFixed(4)} metros</strong></div>
                 `;
             }
 
-            body.innerHTML = htmlContent;
-            modal.style.display = 'flex'; 
+            document.getElementById('modalTitle').innerText = title;
+            document.getElementById('modalBody').innerHTML = bodyHtml;
+            document.getElementById('mathModal').style.display = 'flex';
         }
 
-        function closeMathModal(event) {
+        function closeMathModal(e) {
             document.getElementById('mathModal').style.display = 'none';
         }
 
@@ -1051,8 +1031,7 @@
             toggleInputsDisabled(false);
         });
 
-        // --- CORRECCIÓN CLAVE: INICIALIZACIÓN SEGURA POST-CARGA DEL DOM ---
-        // Esto garantiza de manera absoluta que todo se pinte en el canvas desde el primer segundo sin pantalla negra.
+        // --- INICIALIZACIÓN SEGURA POST-CARGA DEL DOM ---
         window.addEventListener('DOMContentLoaded', () => {
             resetSimulationState();
         });
