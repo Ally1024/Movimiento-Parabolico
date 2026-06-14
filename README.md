@@ -258,3 +258,5 @@ Con este proyecto fue posible aplicar conceptos de física y programación para 
 
 
 
+
+\*
